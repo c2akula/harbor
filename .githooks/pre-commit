@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Fast local guard: refuse to commit private identifiers.
+# CI is the authoritative gate (this is bypassable with --no-verify); this
+# exists so you find out in ~200ms rather than after a push.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+if ! uv run python -m unittest tests.unit.test_config >/dev/null 2>&1; then
+  echo "pre-commit: private-identifier scan FAILED. Run for detail:"
+  echo "  uv run python -m unittest tests.unit.test_config -v"
+  exit 1
+fi

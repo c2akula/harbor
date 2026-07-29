@@ -1,0 +1,6 @@
+[Unit]
+Description=harbor: hibernate the GPU box when idle
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/harbor watchdog

@@ -1,0 +1,59 @@
+# harbor configuration — copy to ~/.config/harbor/config.toml
+# (or run `harbor init`, which writes it for you).
+# Override per-invocation with HARBOR_CONF=/path/to/config.toml.
+#
+# There are three ways to run harbor. Pick one:
+#
+#   hyperstack  harbor manages a Hyperstack VM for you -> keep [vm] below
+#   provider    harbor manages a VM elsewhere          -> keep [vm], supply a
+#                                                        provider class (README)
+#   endpoint    you already run a model server         -> DELETE [vm], set
+#                                                        [endpoint] url
+#
+# In endpoint mode harbor owns no machine: `up`/`down`/`model` stand down, and
+# you still get the Crush config ownership, policy hooks, flows and guarded
+# escalation. That is the smallest way to adopt harbor.
+
+[vm]                              # delete this whole section for endpoint mode
+name = "my-gpu-box"               # VM name AND tailnet hostname — the stable
+                                  # identity; provider ids change on redeploy
+ip = "my-gpu-box"                 # address harbor reaches it on (MagicDNS
+                                  # name survives redeploys; a raw IP does not)
+ssh_user = "ubuntu"
+ssh_key = "~/.ssh/your_key"
+api = "https://infrahub-api.nexgencloud.com/v1"
+key_file = "~/.config/hyperstack/api-key"   # path to the key, never the key
+rate_per_hr = 1.00                # used only to report accrued cost
+# Redeploy: `harbor down --release` deletes the VM keeping the volume;
+# `harbor up` recreates it on the first flavor with stock.
+flavors = ["n3-L40x1"]            # SKU fallback, in preference order
+environment = "default-CANADA-1"
+image = "Ubuntu Server 24.04 LTS R570 CUDA 12.8"
+keypair = "your-hyperstack-keypair"
+tailscale_authkey_file = "~/.config/hyperstack/tailscale-authkey"
+volume = 12345                    # the weights volume id
+
+[endpoint]
+# Where the model answers. A managed box serves directly on its tailnet
+# address (defaults to http://<vm.ip>:8080); set url explicitly when you run
+# your own server.
+# url = "http://your-gpu-box:8080"
+model_key_file = "~/.config/hyperstack/llm-cloud-key"   # path, not the key
+# Context the server serves per request; clients are told this window.
+slot_context = 262144
+# Thinking effort per request: none | low | medium | high | max. Labels map
+# to server-enforced thinking budgets in harbor.effort — the one place those
+# numbers live. Re-run `harbor crush sync` after changing.
+effort = "high"
+
+[oracle]
+# Identifiers that must NEVER reach the frontier model. `harbor consult`
+# refuses outright when this is empty — a guard that silently degrades to
+# "allow" is worse than no guard.
+markers = "yourproject|yourorg|/home/youruser"
+model = "opus"                    # which frontier model answers a consult
+
+[flow]
+# Concurrent model calls a flow may run. 0 = auto-detect, which works for
+# llama.cpp (via /props) but NOT vLLM — set it explicitly there.
+concurrency = 0

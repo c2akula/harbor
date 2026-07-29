@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Unit tests
+        # The identifier scan is an operator-side control (pre-commit, local
+        # markers); CI has no marker list, so the scan opts out here.
+        env:
+          HARBOR_PRIVATE_MARKERS: none
+        run: uv run python -m unittest discover -s tests/unit -p 'test_*.py' -v
+
+  manifest:
+    # The PRIMARY confidentiality control: an allowlist of what may exist in
+    # this repo. The private set is open and cannot be enumerated; what CAN be
+    # enumerated is what belongs here. Needs no secret and no guess about what
+    # is sensitive.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Shared-repo manifest
+        run: uv run python -m unittest tests.unit.test_manifest -v

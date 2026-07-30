@@ -152,9 +152,20 @@ f.write_text(json.dumps(peers, indent=1))
 subprocess.run(["wg", "set", "wg0", "peer", pub,
                 "allowed-ips", {ip!r} + "/32"], check=True)
 PY
-cat /weights/wg/box.pub
-openssl x509 -in /weights/wg/reg-cert.pem -fingerprint -sha256 -noout
+echo "BOXPUB=$(sudo cat /weights/wg/box.pub)"
+sudo openssl x509 -in /weights/wg/reg-cert.pem -fingerprint -sha256 -noout
 """
+
+
+def _labelled(out: str, prefix: str) -> str:
+    """Pick a value out of the box's reply by LABEL. Positional parsing broke
+    the moment one command printed nothing: the next line's value silently
+    took its place."""
+    for line in out.splitlines():
+        line = line.strip()
+        if line.startswith(prefix):
+            return line.split("=", 1)[1].strip()
+    return ""
 
 
 def operator_link(cfg, provider=None) -> None:
@@ -175,9 +186,11 @@ def operator_link(cfg, provider=None) -> None:
     if r.returncode != 0:
         raise RuntimeError(f"operator peer install failed: "
                            f"{r.stderr.strip() or 'box unreachable'}")
-    lines = [l.strip() for l in r.stdout.splitlines() if l.strip()]
-    box_pub = lines[0]
-    fp = lines[-1].split("=", 1)[1] if "=" in lines[-1] else ""
+    box_pub = _labelled(r.stdout, "BOXPUB=")
+    fp = _labelled(r.stdout, "sha256 Fingerprint=")
+    if not (box_pub and fp):
+        raise RuntimeError("the box did not report its public key and "
+                           "certificate fingerprint — check /weights/wg on it")
     cache_write(fp=fp, box_pub=box_pub)
 
     conf = wg_dir() / "harbor.conf"

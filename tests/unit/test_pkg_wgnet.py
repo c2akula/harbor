@@ -123,6 +123,21 @@ class OperatorLink(unittest.TestCase):
                       effort="max", flow_concurrency=0, endpoint_url="http://x",
                       oracle_markers="x", oracle_model="")
 
+    def test_a_silent_command_cannot_shift_a_value_into_the_wrong_field(self):
+        """The box reports two values; when one command prints nothing,
+        positional parsing hands the NEXT value to the wrong field — which
+        wrote a certificate fingerprint in as the peer's public key."""
+        out = "sha256 Fingerprint=AA:BB:CC\n"        # BOXPUB line missing
+        self.assertEqual(wgnet._labelled(out, "BOXPUB="), "")
+        with unittest.mock.patch("harbor.wgnet.subprocess.run") as run, \
+             unittest.mock.patch.object(wgnet, "own_keypair",
+                                        return_value=("PRIV", "PUB")):
+            run.return_value = unittest.mock.Mock(returncode=0, stdout=out,
+                                                  stderr="")
+            with self.assertRaises(RuntimeError) as ctx:
+                wgnet.operator_link(self._cfg(), provider=None)
+        self.assertIn("public key", str(ctx.exception))
+
     def test_link_writes_spoke_conf_and_caches_the_fingerprint(self):
         import pathlib
         calls = []
@@ -131,7 +146,7 @@ class OperatorLink(unittest.TestCase):
             calls.append(cmd)
             out = ""
             if cmd[0] == "ssh":
-                out = "BOXPUB\nsha256 Fingerprint=AA:BB:CC\n"
+                out = "BOXPUB=BOXPUB\nsha256 Fingerprint=AA:BB:CC\n"
             if cmd[:2] == ["wg", "genkey"]:
                 out = "PRIV\n"
             if cmd[:2] == ["wg", "pubkey"]:

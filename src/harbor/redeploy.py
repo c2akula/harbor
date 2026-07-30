@@ -32,6 +32,7 @@ set -e
 mkdir -p /weights/wg /weights/keys
 cd /weights/wg
 [ -f box.key ] || (umask 077; wg genkey > box.key; wg pubkey < box.key > box.pub)
+chmod 644 box.pub          # a PUBLIC key: every joiner needs to read it
 [ -f reg-cert.pem ] || openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \\
   -keyout reg-key.pem -out reg-cert.pem -days 3650 -nodes -subj /CN=harbor-box
 chmod 600 reg-key.pem box.key

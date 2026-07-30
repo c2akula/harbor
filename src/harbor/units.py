@@ -29,8 +29,8 @@ def install_units(cfg: Config) -> None:
     UNIT_DIR.mkdir(parents=True, exist_ok=True)
     pkg = resources.files("harbor") / "systemd"
 
-    # The box serves on the tailnet directly; the only laptop-side unit left
-    # is the watchdog. Retire a tunnel from an earlier install if present.
+    # The box serves on the hub address directly; the only laptop-side unit
+    # left is the watchdog. Retire a tunnel from an earlier install if present.
     (UNIT_DIR / "harbor-tunnel.service").unlink(missing_ok=True)
     for name in ("harbor-watchdog.timer", "harbor-watchdog.service"):
         (UNIT_DIR / name).write_text((pkg / name).read_text())

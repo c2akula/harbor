@@ -11,7 +11,7 @@ def cfg_with(slot_context: int = 131072) -> Config:
     keyfile = pathlib.Path(tempfile.mkdtemp()) / "key"
     keyfile.write_text("sk-model-key\n")
     return Config(
-        vm_name="box", vm_ip="0.0.0.0", provider="hyperstack", ssh_user="ubuntu", ssh_key=pathlib.Path("/x"),
+        vm_name="box", provider="hyperstack", ssh_user="ubuntu", ssh_key=pathlib.Path("/x"),
         api="http://x", key_file=pathlib.Path("/x"), rate_per_hr=1.0,
         model_key_file=keyfile, slot_context=slot_context,
         effort="max", flow_concurrency=0,

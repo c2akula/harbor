@@ -14,7 +14,6 @@ class InitScaffold(unittest.TestCase):
     ANSWERS = "\n".join([
         "hyperstack",         # harbor manages a Hyperstack box
         "boxy",               # vm name
-        "10.1.2.3",           # ip
         "",                   # ssh user (default)
         "",                   # ssh key (default)
         "",                   # api key file (default)
@@ -43,10 +42,9 @@ class InitScaffold(unittest.TestCase):
             self.assertEqual(r.exit_code, 0, r.output)
             cfg = config_mod.load(conf)
             self.assertEqual(cfg.vm_name, "boxy")
-            self.assertEqual(cfg.vm_ip, "10.1.2.3")
             self.assertEqual(cfg.ssh_user, "ubuntu")
-            self.assertEqual(cfg.endpoint_url, "http://10.1.2.3:8080",
-                             "a managed box serves on its own address")
+            self.assertEqual(cfg.endpoint_url, "http://10.77.0.1:8080",
+                             "a managed box serves on the hub address")
             self.assertEqual(cfg.oracle_markers, "seekrit|acmecorp")
             self.assertEqual(cfg.oracle_model, "opus")
 

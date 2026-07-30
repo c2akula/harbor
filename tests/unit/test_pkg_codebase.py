@@ -104,7 +104,7 @@ class ComposedPrefixDoesNotSelfMatch(unittest.TestCase):
         import unittest.mock
         from harbor import consult
         from harbor.config import Config
-        cfg = Config(vm_name="", vm_ip="", provider="hyperstack", ssh_user="u",
+        cfg = Config(vm_name="", provider="hyperstack", ssh_user="u",
                      ssh_key=pathlib.Path("/x"), api="http://x",
                      key_file=pathlib.Path("/x"), rate_per_hr=1.0,
                      model_key_file=pathlib.Path("/x"), slot_context=1,

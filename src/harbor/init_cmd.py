@@ -117,18 +117,6 @@ def _probe_endpoint(url: str) -> None:
               "verify later with 'harbor status')")
 
 
-def _probe_ssh(user: str, key: str, host: str) -> None:
-    r = subprocess.run(
-        ["ssh", "-i", str(pathlib.Path(key).expanduser()),
-         "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=accept-new",
-         "-o", "ConnectTimeout=3", f"{user}@{host}", "true"],
-        capture_output=True)
-    if r.returncode == 0:
-        _ok(f"ssh {user}@{host} works")
-    else:
-        _warn(f"ssh {user}@{host} not reachable (box parked? that's fine)")
-
-
 def _crush_phase() -> None:
     _phase(4, "Crush integration")
     if shutil.which("crush"):
@@ -177,9 +165,9 @@ TEMPLATE = """\
 
 [vm]
 provider = "{provider}"
-# Name is the identity (VM name AND tailnet hostname); ids change on redeploy.
+# Name is the identity; ids and addresses change on redeploy. The box's
+# public address is discovered at `harbor up` and cached, never configured.
 name = "{vm_name}"
-ip = "{vm_ip}"
 ssh_user = "{ssh_user}"
 ssh_key = "{ssh_key}"
 api = "https://infrahub-api.nexgencloud.com/v1"
@@ -191,7 +179,7 @@ rate_per_hr = {rate_per_hr}
 # keypair = "your-keypair"
 # volume = 12345
 
-[endpoint]  # the box serves directly on its tailnet address (no tunnel)
+[endpoint]  # clients reach the box on harbor's own private network
 model_key_file = "{model_key_file}"
 # Context the server actually serves. A client asking for more than this is
 # told a window the server will not honour, so keep them in step.
@@ -278,8 +266,7 @@ def run() -> int:
                   "parked box is fine.")
     values = {
         "provider": "hyperstack",
-        "vm_name": _ask_text("VM name (also the tailnet hostname)"),
-        "vm_ip": _ask_text("VM address (tailnet MagicDNS name or IP)"),
+        "vm_name": _ask_text("VM name"),
         "ssh_user": _ask_text("SSH user", default="ubuntu"),
         "ssh_key": _prompt_path("SSH key path", "~/.ssh/hyperstack_llm"),
         "key_file": _prompt_path("Hyperstack API key file",
@@ -295,7 +282,6 @@ def run() -> int:
                       "harbor.provider.Provider (state/start/stop).")
         values["provider"] = typer.prompt(
             "Import path", default="mycorp.harbor:MyProvider")
-    _probe_ssh(values["ssh_user"], values["ssh_key"], values["vm_ip"])
 
     _phase(3, "Write config")
     path.parent.mkdir(parents=True, exist_ok=True)

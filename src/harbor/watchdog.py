@@ -35,10 +35,15 @@ def _tmux_alive_local() -> bool:
 
 
 def _tmux_alive_vm(cfg: Config) -> bool:
-    cmd = os.environ.get("LLM_WD_VM_TMUX_CMD") or (
-        f"ssh -i {cfg.ssh_key} -o ConnectTimeout=10 -o BatchMode=yes "
-        f"{cfg.ssh_user}@{cfg.vm_ip} 'tmux ls 2>/dev/null | grep -q .' 2>/dev/null"
-    )
+    if cmd := os.environ.get("LLM_WD_VM_TMUX_CMD"):
+        return _sh(cmd).returncode == 0
+    from . import wgnet
+    try:
+        host = wgnet.ssh_host(cfg)
+    except wgnet.CacheMissing:
+        return False        # never upped from here: nothing to keep alive
+    cmd = (f"ssh -i {cfg.ssh_key} -o ConnectTimeout=10 -o BatchMode=yes "
+           f"{cfg.ssh_user}@{host} 'tmux ls 2>/dev/null | grep -q .' 2>/dev/null")
     return _sh(cmd).returncode == 0
 
 

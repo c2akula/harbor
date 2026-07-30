@@ -9,9 +9,9 @@ from harbor import units
 from harbor.config import Config
 
 
-def cfg(*, vm_ip: str, tmp: pathlib.Path) -> Config:
+def cfg(*, managed: bool, tmp: pathlib.Path) -> Config:
     return Config(
-        vm_name="box" if vm_ip else "", vm_ip=vm_ip, provider="hyperstack",
+        vm_name="box" if managed else "", provider="hyperstack",
         ssh_user="ubuntu", ssh_key=pathlib.Path("/x"),
         api="http://x", key_file=tmp / "k", rate_per_hr=1.0,
         model_key_file=tmp / "mk", slot_context=131072,
@@ -32,7 +32,7 @@ class UnitsPerMode(unittest.TestCase):
             tmp = pathlib.Path(d)
             with unittest.mock.patch.object(units, "UNIT_DIR", tmp / "units"), \
                  unittest.mock.patch.object(units, "_daemon_reload"):
-                units.install_units(cfg(vm_ip="", tmp=tmp))
+                units.install_units(cfg(managed=False, tmp=tmp))
             self.assertFalse((tmp / "units").exists())
 
     def test_managed_mode_installs_the_watchdog_and_no_tunnel(self):
@@ -40,7 +40,7 @@ class UnitsPerMode(unittest.TestCase):
             tmp = pathlib.Path(d)
             with unittest.mock.patch.object(units, "UNIT_DIR", tmp / "units"), \
                  unittest.mock.patch.object(units, "_daemon_reload"):
-                units.install_units(cfg(vm_ip="10.0.0.1", tmp=tmp))
+                units.install_units(cfg(managed=True, tmp=tmp))
             self.assertTrue((tmp / "units" / "harbor-watchdog.timer").exists())
             self.assertFalse((tmp / "units" / "harbor-tunnel.service").exists())
 
@@ -51,7 +51,7 @@ class UnitsPerMode(unittest.TestCase):
             (tmp / "units" / "harbor-tunnel.service").write_text("stale")
             with unittest.mock.patch.object(units, "UNIT_DIR", tmp / "units"), \
                  unittest.mock.patch.object(units, "_daemon_reload"):
-                units.install_units(cfg(vm_ip="10.0.0.1", tmp=tmp))
+                units.install_units(cfg(managed=True, tmp=tmp))
             self.assertFalse((tmp / "units" / "harbor-tunnel.service").exists())
 
 
@@ -65,7 +65,7 @@ class HostsWithoutUserSystemd(unittest.TestCase):
             with unittest.mock.patch.object(units, "UNIT_DIR", tmp / "units"), \
                  unittest.mock.patch("subprocess.run",
                                      side_effect=FileNotFoundError("systemctl")):
-                units.install_units(cfg(vm_ip="10.0.0.1", tmp=tmp))
+                units.install_units(cfg(managed=True, tmp=tmp))
             self.assertTrue((tmp / "units" / "harbor-watchdog.timer").exists(),
                             "units should still be on disk for a later reload")
 
@@ -75,7 +75,7 @@ class HostsWithoutUserSystemd(unittest.TestCase):
             err = subprocess.CalledProcessError(1, "systemctl")
             with unittest.mock.patch.object(units, "UNIT_DIR", tmp / "units"), \
                  unittest.mock.patch("subprocess.run", side_effect=err):
-                units.install_units(cfg(vm_ip="10.0.0.1", tmp=tmp))
+                units.install_units(cfg(managed=True, tmp=tmp))
 
 
 class InstallerOrdering(unittest.TestCase):

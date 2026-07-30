@@ -16,7 +16,7 @@ from harbor import cli, watchdog
 from harbor.config import Config
 
 FAKE = Config(
-    vm_name="", vm_ip="0.0.0.0", provider="hyperstack", ssh_user="nobody", ssh_key=pathlib.Path("/nonexistent"),
+    vm_name="", provider="hyperstack", ssh_user="nobody", ssh_key=pathlib.Path("/nonexistent"),
     api="http://127.0.0.1:1", key_file=pathlib.Path("/nonexistent"), rate_per_hr=1.0,
     model_key_file=pathlib.Path("/nonexistent"), slot_context=1,
     effort="max", flow_concurrency=0, endpoint_url="http://127.0.0.1:8081", oracle_markers="x", oracle_model="",

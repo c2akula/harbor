@@ -55,15 +55,16 @@ def resolve_id(cfg: Config) -> int | None:
 
 
 def create(cfg: Config, flavor: str, user_data: str) -> int:
-    """Create the VM (no public ingress — the tailnet is the way in) and
-    attach the weights volume. Returns the new id."""
+    """Create the VM with a public address (which speaks only WireGuard,
+    SSH and peer registration — the firewall in cloud-init sees to that)
+    and attach the weights volume. Returns the new id."""
     body = {
         "name": cfg.vm_name,
         "environment_name": cfg.environment,
         "image_name": cfg.image,
         "flavor_name": flavor,
         "key_name": cfg.keypair,
-        "assign_floating_ip": False,
+        "assign_floating_ip": True,
         "user_data": user_data,
         "count": 1,
     }
@@ -93,6 +94,18 @@ def destroy(cfg: Config) -> None:
         return
     _req(cfg, "DELETE", f"/core/virtual-machines/{vm_id}")
     _ID_CACHE.pop((cfg.api, cfg.vm_name), None)
+
+
+def floating_ip(cfg: Config) -> str:
+    """The VM's public address, '' while none is assigned yet."""
+    try:
+        vm_id = resolve_id(cfg)
+        if vm_id is None:
+            return ""
+        data = _get(cfg, f"/core/virtual-machines/{vm_id}")
+    except (requests.RequestException, HyperstackError):
+        return ""
+    return data.get("instance", {}).get("floating_ip") or ""
 
 
 def gpu_from_flavor(flavor: str) -> str:
@@ -255,3 +268,6 @@ class HyperstackProvider:
         except HyperstackError as e:
             if "already" not in e.message.lower():
                 raise
+
+    def public_ip(self, cfg: Config) -> str:
+        return floating_ip(cfg)

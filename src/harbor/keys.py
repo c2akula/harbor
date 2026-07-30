@@ -12,6 +12,7 @@ import secrets
 import subprocess
 
 from . import state
+from . import wgnet
 from .config import Config
 
 KEYS_DIR = "/weights/keys"
@@ -23,10 +24,14 @@ class KeyExists(RuntimeError):
 
 
 def _run(cfg: Config, script: str) -> str:
+    try:
+        host = wgnet.ssh_host(cfg)
+    except wgnet.CacheMissing as e:
+        raise state.StateUnavailable(str(e))
     r = subprocess.run(
         ["ssh", "-i", str(cfg.ssh_key), "-o", "BatchMode=yes",
          "-o", "StrictHostKeyChecking=accept-new",
-         "-o", "ConnectTimeout=5", f"{cfg.ssh_user}@{cfg.vm_ip}",
+         "-o", "ConnectTimeout=5", f"{cfg.ssh_user}@{host}",
          f"mkdir -p {KEYS_DIR} && cd {KEYS_DIR} && {script}"],
         capture_output=True, text=True, timeout=30)
     if r.returncode != 0:

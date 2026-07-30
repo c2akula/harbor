@@ -55,7 +55,7 @@ class StatusWarnsOnCostlyStates(unittest.TestCase):
         import unittest.mock
         from harbor import hyperstack, status as status_mod
         from harbor.config import Config
-        cfg = Config(vm_name="box", vm_ip="0.0.0.0", provider="hyperstack",
+        cfg = Config(vm_name="box", provider="hyperstack",
                      ssh_user="u", ssh_key=pathlib.Path("/x"), api="http://x",
                      key_file=pathlib.Path("/x"), rate_per_hr=1.0,
                      model_key_file=pathlib.Path("/x"), slot_context=1,
@@ -149,9 +149,10 @@ class BringYourOwnEndpoint(unittest.TestCase):
         self.assertTrue(cfg.manages_vm)
 
     def test_endpoint_url_defaults_to_the_box_address(self):
-        """A managed box serves on its tailnet address directly."""
-        cfg = self._load(b'[vm]\nname = "box"\nip = "10.0.0.1"\n')
-        self.assertEqual(cfg.endpoint_url, "http://10.0.0.1:8080")
+        """A managed box serves on the hub address of harbor's own network —
+        the same constant for every client."""
+        cfg = self._load(b'[vm]\nname = "box"\n')
+        self.assertEqual(cfg.endpoint_url, "http://10.77.0.1:8080")
 
     def test_trailing_slash_is_normalised(self):
         cfg = self._load(b'[endpoint]\nurl = "http://gpu.example:9000/"\n')

@@ -12,7 +12,7 @@ from harbor import provider as prov
 from harbor.config import Config
 
 FAKE = Config(
-    vm_name="box", vm_ip="0.0.0.0", provider="hyperstack", ssh_user="u",
+    vm_name="box", provider="hyperstack", ssh_user="u",
     ssh_key=pathlib.Path("/x"), api="http://x", key_file=pathlib.Path("/x"),
     rate_per_hr=1.0, model_key_file=pathlib.Path("/x"),
     slot_context=1, effort="max", flow_concurrency=0,
@@ -47,11 +47,13 @@ class FakeProvider:
 def run_up(fake):
     import os
     import tempfile
+    from harbor import wgnet
     with tempfile.TemporaryDirectory() as d, \
          unittest.mock.patch.dict(os.environ, {"LLM_WD_STATE_DIR": d}), \
          unittest.mock.patch.object(prov, "load", return_value=fake), \
          unittest.mock.patch.object(lifecycle.subprocess, "run"), \
          unittest.mock.patch.object(lifecycle.time, "sleep"), \
+         unittest.mock.patch.object(wgnet, "operator_link"), \
          unittest.mock.patch.object(lifecycle.requests, "get") as get:
         get.return_value.status_code = 200
         return lifecycle.up(FAKE)

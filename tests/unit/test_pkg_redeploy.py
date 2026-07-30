@@ -11,7 +11,7 @@ from harbor.config import Config
 
 def cfg(**kw):
     base = dict(
-        vm_name="box", vm_ip="box", provider="hyperstack", ssh_user="u",
+        vm_name="box", provider="hyperstack", ssh_user="u",
         ssh_key=pathlib.Path("/x"), api="http://x",
         key_file=pathlib.Path("/x"), rate_per_hr=1.0,
         model_key_file=pathlib.Path("/x"), slot_context=1, effort="max",
@@ -39,11 +39,43 @@ class CapableProvider:
 
     def destroy(self, c): pass
 
+    def public_ip(self, c): return "203.0.113.7"
+
 
 class MinimalProvider:
     def state(self, c): return prov.ABSENT
     def start(self, c): pass
     def stop(self, c): pass
+
+
+class CloudInitContract(unittest.TestCase):
+    def test_no_third_party_transport(self):
+        self.assertNotIn("tailscale", redeploy.user_data(cfg()).lower(),
+                         "M6: the box's network is harbor's own")
+
+    def test_regserve_ships_verbatim_from_the_package(self):
+        import base64
+        ud = redeploy.user_data(cfg())
+        packed = ud.split("regserve.py\n")[1].split("content: ")[1].split()[0]
+        self.assertEqual(base64.b64decode(packed).decode(),
+                         redeploy.regserve_source(),
+                         "the service on the box must be the one we unit-test")
+
+    def test_firewall_defaults_closed_with_exactly_the_three_doors(self):
+        import base64
+        ud = redeploy.user_data(cfg())
+        packed = ud.split("nftables.conf\n")[1].split("content: ")[1].split()[0]
+        nft = base64.b64decode(packed).decode()
+        self.assertIn("policy drop", nft)
+        for door in ("tcp dport 22", "udp dport 51820", "tcp dport 8443"):
+            self.assertIn(door, nft)
+        self.assertNotIn("8080", nft,
+                         "the model port must never open on the public side")
+
+    def test_volume_mounts_before_the_hub_rises(self):
+        ud = redeploy.user_data(cfg())
+        self.assertLess(ud.index("mount -a"), ud.index("hub.sh\n", ud.index("runcmd")),
+                        "the box's network identity lives on the volume")
 
 
 class Capability(unittest.TestCase):

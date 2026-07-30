@@ -9,7 +9,7 @@ from harbor.config import Config
 
 def cfg(provider_spec: str) -> Config:
     return Config(
-        vm_name="box", vm_ip="0.0.0.0", provider=provider_spec, ssh_user="u",
+        vm_name="box", provider=provider_spec, ssh_user="u",
         ssh_key=pathlib.Path("/x"), api="http://x", key_file=pathlib.Path("/x"),
         rate_per_hr=1.0, model_key_file=pathlib.Path("/x"),
         slot_context=1, effort="max", flow_concurrency=0,

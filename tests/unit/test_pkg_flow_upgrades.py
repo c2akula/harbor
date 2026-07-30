@@ -80,7 +80,7 @@ class SlotPool(unittest.TestCase):
         import unittest.mock
         from harbor.config import Config
         os.environ.pop(flow.SLOTS_ENV, None)
-        cfg = Config(vm_name="", vm_ip="x", provider="hyperstack", ssh_user="u", ssh_key=pathlib.Path("/x"),
+        cfg = Config(vm_name="", provider="hyperstack", ssh_user="u", ssh_key=pathlib.Path("/x"),
                      api="x", key_file=pathlib.Path("/x"), rate_per_hr=1.0,
                      model_key_file=pathlib.Path("/x"),
                      slot_context=1, effort="max", flow_concurrency=16, endpoint_url="http://127.0.0.1:8081",
@@ -95,7 +95,7 @@ class SlotPool(unittest.TestCase):
         import unittest.mock
         from harbor.config import Config
         os.environ.pop(flow.SLOTS_ENV, None)
-        cfg = Config(vm_name="", vm_ip="x", provider="hyperstack", ssh_user="u", ssh_key=pathlib.Path("/x"),
+        cfg = Config(vm_name="", provider="hyperstack", ssh_user="u", ssh_key=pathlib.Path("/x"),
                      api="x", key_file=pathlib.Path("/x"), rate_per_hr=1.0,
                      model_key_file=pathlib.Path("/x"),
                      slot_context=1, effort="max", flow_concurrency=0, endpoint_url="http://127.0.0.1:8081",

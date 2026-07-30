@@ -38,9 +38,10 @@ weights volume, and `harbor down --release` can delete it:
     def stock(self, cfg, flavor) -> int: ...          # units available
     def create(self, cfg, flavor, user_data) -> int:  # new VM id
     def destroy(self, cfg) -> None: ...
+    def public_ip(self, cfg) -> str: ...              # '' until assigned
 ```
 
-- `create` receives a cloud-init document (tailnet join, volume mount,
+- `create` receives a cloud-init document (network hub, volume mount,
   driver check) and must attach the weights volume before returning.
 - Without these methods, nothing changes: `up` on an ABSENT box refuses
   plainly, and `--release` falls back to parking.

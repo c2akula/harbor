@@ -94,7 +94,7 @@ User=$(id -un)
 Environment=PATH=$VOL/venv/bin:/usr/local/bin:/usr/bin:/bin
 Environment=HF_HOME=$VOL/hf
 ExecStart=$VOL/venv/bin/vllm serve $target \\
-  --served-model-name qwen qwen-coding qwen-explore --host 127.0.0.1 --port 8080 \\
+  --served-model-name qwen qwen-coding qwen-explore --host 10.77.0.1 --port 8080 \\
   --chat-template $VOL/chat-template.jinja \\
   --api-key $KEY \\
   --enable-auto-tool-choice --tool-call-parser qwen3_xml \\
@@ -111,7 +111,7 @@ sudo systemctl daemon-reload && sudo systemctl enable --now vllm
 
 log "waiting for health (first load compiles kernels; several minutes)"
 for _ in $(seq 1 150); do
-  curl -s -m 2 http://127.0.0.1:8080/health >/dev/null 2>&1 && { log "SERVING"; exit 0; }
+  curl -s -m 2 http://10.77.0.1:8080/health >/dev/null 2>&1 && { log "SERVING"; exit 0; }
   sleep 10
 done
 log "TIMEOUT — sudo journalctl -u vllm -n 50"

@@ -11,7 +11,7 @@ from harbor.config import Config
 
 def fake_cfg(key_file: pathlib.Path) -> Config:
     return Config(
-        vm_name="", vm_ip="0.0.0.0", provider="hyperstack", ssh_user="u", ssh_key=pathlib.Path("/x"),
+        vm_name="", provider="hyperstack", ssh_user="u", ssh_key=pathlib.Path("/x"),
         api="http://x", key_file=pathlib.Path("/x"), rate_per_hr=1.0,
         model_key_file=key_file, slot_context=131072,
         effort="max", flow_concurrency=0, endpoint_url="http://127.0.0.1:8081", oracle_markers="x", oracle_model="",

@@ -15,10 +15,10 @@
 # escalation. That is the smallest way to adopt harbor.
 
 [vm]                              # delete this whole section for endpoint mode
-name = "my-gpu-box"               # VM name AND tailnet hostname — the stable
-                                  # identity; provider ids change on redeploy
-ip = "my-gpu-box"                 # address harbor reaches it on (MagicDNS
-                                  # name survives redeploys; a raw IP does not)
+name = "my-gpu-box"               # the stable identity; provider ids and
+                                  # addresses change on redeploy. The box's
+                                  # public address is discovered at `harbor
+                                  # up` and cached — never configured.
 ssh_user = "ubuntu"
 ssh_key = "~/.ssh/your_key"
 api = "https://infrahub-api.nexgencloud.com/v1"
@@ -30,13 +30,12 @@ flavors = ["n3-L40x1"]            # SKU fallback, in preference order
 environment = "default-CANADA-1"
 image = "Ubuntu Server 24.04 LTS R570 CUDA 12.8"
 keypair = "your-hyperstack-keypair"
-tailscale_authkey_file = "~/.config/hyperstack/tailscale-authkey"
 volume = 12345                    # the weights volume id
 
 [endpoint]
-# Where the model answers. A managed box serves directly on its tailnet
-# address (defaults to http://<vm.ip>:8080); set url explicitly when you run
-# your own server.
+# Where the model answers. A managed box serves on the hub address of
+# harbor's own private network (http://10.77.0.1:8080 — the default); set
+# url explicitly only when you run your own server.
 # url = "http://your-gpu-box:8080"
 model_key_file = "~/.config/hyperstack/llm-cloud-key"   # path, not the key
 # Context the server serves per request; clients are told this window.

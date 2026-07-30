@@ -31,6 +31,7 @@ ALLOWED_FILES = {
     # docs/ grant would re-admit the path class of a real past leak.
     "docs/security.md", "docs/workflows.md", "docs/extending.md",
     "docs/setup-endpoint.md", "docs/setup-managed.md", "docs/operating.md",
+    "docs/setup-team.md",
 }
 
 

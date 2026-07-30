@@ -32,7 +32,8 @@ crush run "hello"
 
 ## Why trust it with your code
 
-The primary model runs on your own machines over your tailnet — zero public
+The primary model runs on your own machines, reachable only over a private
+WireGuard network harbor builds itself — no VPN accounts, no public
 ingress, per-user API keys. The optional frontier "oracle" is blind: no file
 tools, a neutral working directory, and every outgoing question is checked
 against your repository's own content before it may leave. Details and
@@ -45,6 +46,7 @@ honest non-goals: [docs/security.md](docs/security.md).
 | [docs/security.md](docs/security.md) | the threat model — why harbor exists |
 | [docs/setup-endpoint.md](docs/setup-endpoint.md) | you already run a server |
 | [docs/setup-managed.md](docs/setup-managed.md) | harbor runs the box |
+| [docs/setup-team.md](docs/setup-team.md) | your team on one box — one paste to join |
 | [docs/operating.md](docs/operating.md) | day to day: lifecycle, keys, effort, capacity |
 | [docs/workflows.md](docs/workflows.md) | Crush agents vs `harbor flow` |
 | [docs/extending.md](docs/extending.md) | bring your own provider |

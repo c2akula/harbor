@@ -10,7 +10,10 @@
 | `harbor status` | box · model · load · watchdog · credit |
 | `harbor hold 3` | block auto-park for 3h (`3h` works too; `off` releases) |
 | `harbor model <name>` | switch served models (re-renders the unit on the box) |
-| `harbor keys add\|revoke\|list` | per-user model API keys |
+| `harbor share` | print the team onboarding message — see [setup-team.md](setup-team.md) |
+| `harbor join '<blob>'` | join someone else's box (teammates; installs the link) |
+| `harbor peers list\|remove` | devices on the box's network |
+| `harbor keys add\|revoke\|list\|rotate` | model API keys; `rotate` re-mints the team key |
 | `harbor crush check\|sync` | assert harbor-owned keys in crush.json |
 | `harbor consult` | guarded escalation to a frontier model |
 | `harbor flow <script>` | deterministic workflows — see [workflows.md](workflows.md) |

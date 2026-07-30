@@ -16,6 +16,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 
+from . import wgnet
 from .config import Config
 
 # Weights and venv live on the persistent volume: it survives hibernation
@@ -91,16 +92,16 @@ def render_unit(cfg: Config, spec: ModelSpec,
     """The complete systemd unit. RequiresMountsFor keeps systemd from starting
     the server before the weights volume is mounted.
 
-    Binds the box's tailnet address: clients talk to the server directly and
-    the tailnet is the security boundary. Every issued per-user key is a valid
-    --api-key value; revocation is a re-render without it.
+    Binds the WireGuard hub address: clients talk to the server over their
+    spoke tunnels and the network is the security boundary. Every issued
+    key is a valid --api-key value; revocation is a re-render without it.
     """
     key_list = " ".join(api_keys) if api_keys else \
         cfg.model_key_file.read_text().strip()
     return f"""[Unit]
 Description=vLLM serving {spec.checkpoint} from the persistent weights volume
 RequiresMountsFor={VOLUME}
-After=network-online.target tailscaled.service
+After=network-online.target wg-quick@wg0.service
 
 [Service]
 User={cfg.ssh_user}
@@ -110,7 +111,7 @@ User={cfg.ssh_user}
 Environment=PATH={VOLUME}/venv/bin:/usr/local/bin:/usr/bin:/bin
 Environment=HF_HOME={VOLUME}/hf
 ExecStart={VOLUME}/venv/bin/vllm serve {VOLUME}/{spec.checkpoint} \\
-  --served-model-name {SERVED_NAMES} --host {cfg.vm_ip} --port 8080 \\
+  --served-model-name {SERVED_NAMES} --host {wgnet.HUB_IP} --port 8080 \\
   --chat-template {VOLUME}/chat-template.jinja \\
   --api-key {key_list} \\
   {AGENT_FLAGS} \\
@@ -147,7 +148,7 @@ def remote_script(spec: ModelSpec, name: str = "",
         "sudo systemctl daemon-reload\n"
         "sudo systemctl enable vllm\n"
         "sudo systemctl restart vllm\n"
-        # Health on the BOUND address: a tailnet-bound server does not answer
+        # Health on the BOUND address: a hub-bound server does not answer
         # on loopback.
         f"until curl -s -m 2 http://{host}:8080/health >/dev/null 2>&1; "
         "do sleep 5; done\n"
@@ -178,8 +179,9 @@ def switch(cfg: Config, name: str) -> int:
     r = subprocess.run(
         ["ssh", "-i", str(cfg.ssh_key), "-o", "BatchMode=yes",
          "-o", "StrictHostKeyChecking=accept-new",
-         f"{cfg.ssh_user}@{cfg.vm_ip}",
-         remote_script(spec, name, host=cfg.vm_ip)],
+         f"{cfg.ssh_user}@{wgnet.ssh_host(cfg)}",
+         # Health runs ON the box, where the hub address is local.
+         remote_script(spec, name, host=wgnet.HUB_IP)],
         input=render_unit(cfg, spec, api_keys), text=True,
     )
     if r.returncode != 0:

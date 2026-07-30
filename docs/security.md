@@ -8,8 +8,9 @@ administer.** Everything below serves that promise.
 | Layer | Boundary | Enforced by |
 |---|---|---|
 | Your code | your machines | the local model runs on YOUR box; no third-party inference API ever sees a file |
-| Network | the tailnet | the server binds its tailnet address only — zero public ingress, no tunnels to manage |
-| Model access | per-user keys | `harbor keys` issues and revokes them; the server rejects everything else |
+| Network | harbor's own WireGuard net | the box is the hub; the model binds the hub address only. The public address speaks nothing but WireGuard, peer registration, and SSH — no third party carries or brokers the keys |
+| Peer isolation | tunnel topology | a teammate's tunnel routes to the box alone: no path to the operator, other teammates, or anything else |
+| Model access | API keys | `harbor keys` issues and revokes them; the server rejects everything else |
 | Frontier escalation | the oracle firewall | see below |
 | This repo | a path allowlist in CI | anything not explicitly permitted fails the build |
 
@@ -41,8 +42,9 @@ Be honest about the edges:
 - **A malicious operator.** Anyone with the box's SSH key owns the box.
 - **Prompt-level leakage you approve.** The consult review gate is a human
   decision; harbor blocks accidents, not intent.
-- **Tailnet compromise.** If your tailnet is breached, the model endpoint is
-  reachable. Keys limit blast radius; they do not restore the boundary.
+- **A leaked share message.** The join blob IS access: whoever holds it can
+  register a device and call the model (and only that — the tunnel reaches
+  nothing else). `harbor keys rotate` + `harbor peers remove` kill it.
 - **The model provider's checkpoint.** Weights are downloaded from a public
   registry; verify provenance to your own standard.
 

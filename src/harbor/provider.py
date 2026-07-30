@@ -33,12 +33,12 @@ ABSENT = "ABSENT"                # no machine exists under the configured name
 
 
 def can_redeploy(p: "Provider") -> bool:
-    """Redeploy (create/destroy/stock) is an OPTIONAL capability: a provider
-    without it keeps park-and-resume semantics, and `harbor up` on an ABSENT
-    box refuses instead of creating. Not part of the required protocol —
+    """Redeploy (create/destroy/stock/public_ip) is an OPTIONAL capability: a
+    provider without it keeps park-and-resume semantics, and `harbor up` on an
+    ABSENT box refuses instead of creating. Not part of the required protocol —
     optionality here beats forcing every provider to lie about creation."""
     return all(callable(getattr(p, m, None))
-               for m in ("create", "destroy", "stock"))
+               for m in ("create", "destroy", "stock", "public_ip"))
 
 
 @runtime_checkable

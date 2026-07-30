@@ -68,9 +68,14 @@ def model_serving(cfg: Config) -> str | None:
 
 
 def _vm_uptime_seconds(cfg: Config) -> int | None:
+    from . import wgnet
+    try:
+        host = wgnet.ssh_host(cfg)
+    except wgnet.CacheMissing:
+        return None
     r = subprocess.run(
         ["ssh", "-i", str(cfg.ssh_key), "-o", "ConnectTimeout=8",
-         f"{cfg.ssh_user}@{cfg.vm_ip}", "cut -d. -f1 /proc/uptime"],
+         f"{cfg.ssh_user}@{host}", "cut -d. -f1 /proc/uptime"],
         capture_output=True, text=True,
     )
     try:

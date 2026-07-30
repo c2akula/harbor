@@ -14,9 +14,9 @@ from harbor import state
 from harbor.config import Config
 
 
-def cfg(vm_ip="10.0.0.1"):
+def cfg(managed=True):
     return Config(
-        vm_name="box" if vm_ip else "", vm_ip=vm_ip, provider="hyperstack",
+        vm_name="box" if managed else "", provider="hyperstack",
         ssh_user="u", ssh_key=pathlib.Path("/x"), api="http://x",
         key_file=pathlib.Path("/x"), rate_per_hr=1.0,
         model_key_file=pathlib.Path("/x"), slot_context=1, effort="max",
@@ -84,7 +84,7 @@ class SharedHold(unittest.TestCase):
     def test_endpoint_mode_stays_local(self):
         with unittest.mock.patch.dict("os.environ",
                                       {"LLM_WD_STATE_DIR": self.d}):
-            state.set_hold(1, cfg(vm_ip=""))
+            state.set_hold(1, cfg(managed=False))
         self.assertEqual(self.box.calls, 0, "no VM — nothing to SSH to")
 
 

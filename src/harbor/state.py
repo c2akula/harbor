@@ -38,10 +38,15 @@ STRIKE_WINDOW = 480     # seconds; slightly under the watchdog tick
 
 
 def _box_run(cfg, script: str) -> str:
+    from . import wgnet
+    try:
+        host = wgnet.ssh_host(cfg)
+    except wgnet.CacheMissing as e:
+        raise StateUnavailable(str(e))
     r = subprocess.run(
         ["ssh", "-i", str(cfg.ssh_key), "-o", "BatchMode=yes",
          "-o", "StrictHostKeyChecking=accept-new",
-         "-o", "ConnectTimeout=5", f"{cfg.ssh_user}@{cfg.vm_ip}",
+         "-o", "ConnectTimeout=5", f"{cfg.ssh_user}@{host}",
          f"mkdir -p {BOX_STATE_DIR} && cd {BOX_STATE_DIR} && {script}"],
         capture_output=True, text=True, timeout=30)
     if r.returncode != 0:

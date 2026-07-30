@@ -109,6 +109,16 @@ def up(cfg: Config) -> int:
         return 1
     print(" ACTIVE")
 
+    # The model wait below talks to the hub address, which only exists once
+    # this machine is a spoke — so the link comes first.
+    from . import wgnet
+    print("linking into the box's network...")
+    try:
+        wgnet.operator_link(cfg, provider=p)
+    except (wgnet.CacheMissing, wgnet.WgMissing, RuntimeError) as e:
+        print(f"harbor up: {e}", file=sys.stderr)
+        return 1
+
     print("waiting for model", end="", flush=True)
     for _ in range(POLL_TRIES):
         try:
@@ -127,8 +137,9 @@ def up(cfg: Config) -> int:
             pass
         print(".", end="", flush=True)
         time.sleep(POLL_SECONDS)
-    print(f" TIMEOUT — check: ssh -i {cfg.ssh_key} {cfg.ssh_user}@{cfg.vm_ip}"
-          " 'systemctl status vllm'", file=sys.stderr)
+    print(f" TIMEOUT — check: ssh -i {cfg.ssh_key} {cfg.ssh_user}@<box-ip> "
+          "'systemctl status vllm' (harbor status shows the address)",
+          file=sys.stderr)
     return 1
 
 

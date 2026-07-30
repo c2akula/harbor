@@ -127,6 +127,18 @@ class SkuFallback(unittest.TestCase):
             redeploy.redeploy(cfg(), p)
         self.assertEqual(p.created, [], "must continue against the orphan")
 
+    def test_an_intent_that_never_created_is_discarded(self):
+        """A run killed before its create call leaves vm_id null; with the
+        provider seeing nothing under our name, the next up must create
+        fresh — not wait forever on a ghost (e.g. two concurrent `up` runs
+        where the first dies during its volume wait)."""
+        (pathlib.Path(self.d) / "redeploy.json").write_text(
+            json.dumps({"vm_id": None, "flavor": "gpu-a"}))
+        p = CapableProvider({"gpu-a": 5})
+        with self._ud():
+            redeploy.redeploy(cfg(), p)
+        self.assertEqual(p.created, ["gpu-a"], "must create, not wait")
+
     def test_missing_redeploy_intent_refuses(self):
         p = CapableProvider({"gpu-a": 5})
         with self._ud():

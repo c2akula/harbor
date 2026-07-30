@@ -141,6 +141,16 @@ def redeploy(cfg: Config, p) -> int:
         print("harbor up: redeploy needs [vm] image, keypair and volume",
               file=sys.stderr)
         return 1
+    # A stale intent can name no VM at all (the run died before the create
+    # call went out). If the provider also sees nothing under our name, the
+    # create genuinely never happened — waiting on it would wait forever.
+    if _orphan_file().exists():
+        blob = json.loads(_orphan_file().read_text())
+        if blob.get("vm_id") is None and p.state(cfg) == prov.ABSENT:
+            print("note: discarding an intent that never created anything",
+                  file=sys.stderr)
+            _orphan_file().unlink()
+
     if _orphan_file().exists():
         blob = json.loads(_orphan_file().read_text())
         print(f"note: an earlier redeploy left VM id {blob.get('vm_id')} "

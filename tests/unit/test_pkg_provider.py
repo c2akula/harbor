@@ -53,6 +53,26 @@ class Loading(unittest.TestCase):
         self.assertIn("no_such_module", str(e.exception))
 
 
+class HyperstackCreate(unittest.TestCase):
+    def test_create_opens_ingress_before_anyone_waits_on_ssh(self):
+        """The provider's default security group is egress-only; a create
+        that skips the ingress rules yields a box no one can ever reach."""
+        from harbor import hyperstack
+        calls = []
+
+        def req(cfg_, method, path, body=None):
+            calls.append((method, path, body))
+            return {"instances": [{"id": 7}]}
+
+        with unittest.mock.patch.object(hyperstack, "_req", side_effect=req), \
+             unittest.mock.patch.object(hyperstack, "attach_volume"):
+            hyperstack.create(cfg("hyperstack"), "gpu-a", "#cloud-config")
+        rules = [b for m, p, b in calls if p.endswith("/sg-rules")]
+        got = {(b["protocol"], b["port_range_min"]) for b in rules}
+        self.assertEqual(got, {("tcp", 22), ("udp", 51820), ("tcp", 8443)})
+        self.assertTrue(all(b["direction"] == "ingress" for b in rules))
+
+
 class HyperstackNormalisation(unittest.TestCase):
     """Hyperstack has TWO off-states with different endpoints AND different
     billing. Both must present as OFF so harbor's logic never has to know."""

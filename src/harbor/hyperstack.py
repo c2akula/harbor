@@ -54,10 +54,25 @@ def resolve_id(cfg: Config) -> int | None:
     return None
 
 
+# The provider's default security group is egress-only: without these
+# ingress rules the floating IP drops every inbound packet one layer above
+# our own nftables, and the box is unreachable forever.
+INGRESS = (("tcp", 22), ("udp", 51820), ("tcp", 8443))
+
+
+def open_ingress(cfg: Config, vm_id: int) -> None:
+    for proto, port in INGRESS:
+        _req(cfg, "POST", f"/core/virtual-machines/{vm_id}/sg-rules",
+             {"direction": "ingress", "ethertype": "IPv4",
+              "protocol": proto, "port_range_min": port,
+              "port_range_max": port, "remote_ip_prefix": "0.0.0.0/0"})
+
+
 def create(cfg: Config, flavor: str, user_data: str) -> int:
     """Create the VM with a public address (which speaks only WireGuard,
-    SSH and peer registration — the firewall in cloud-init sees to that)
-    and attach the weights volume. Returns the new id."""
+    SSH and peer registration — provider ingress rules and the cloud-init
+    firewall both see to that) and attach the weights volume. Returns the
+    new id."""
     body = {
         "name": cfg.vm_name,
         "environment_name": cfg.environment,
@@ -71,6 +86,7 @@ def create(cfg: Config, flavor: str, user_data: str) -> int:
     data = _req(cfg, "POST", "/core/virtual-machines", body)
     vm_id = int(data["instances"][0]["id"])
     _ID_CACHE[(cfg.api, cfg.vm_name)] = vm_id
+    open_ingress(cfg, vm_id)
     attach_volume(cfg, vm_id)
     return vm_id
 

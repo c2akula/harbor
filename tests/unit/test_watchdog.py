@@ -164,6 +164,20 @@ class StockWatch(unittest.TestCase):
 
 
 class HoldCommand(unittest.TestCase):
+    def setUp(self):
+        # The CLI must not read the operator's real ~/.config/harbor — an
+        # empty file is a valid endpoint-mode config.
+        conf = pathlib.Path(tempfile.mkdtemp(prefix="holdconf_")) / "config.toml"
+        conf.write_text("")
+        self._prior_conf = os.environ.get("HARBOR_CONF")
+        os.environ["HARBOR_CONF"] = str(conf)
+
+    def tearDown(self):
+        if self._prior_conf is None:
+            os.environ.pop("HARBOR_CONF", None)
+        else:
+            os.environ["HARBOR_CONF"] = self._prior_conf
+
     def _hold(self, state_dir, *args):
         os.environ["LLM_WD_STATE_DIR"] = state_dir
         try:

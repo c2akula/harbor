@@ -131,7 +131,8 @@ class ReasoningOnlyReply(unittest.TestCase):
 
         with unittest.mock.patch("harbor.flow.requests.post", return_value=Resp()), \
              unittest.mock.patch("harbor.flow._endpoint",
-                                 return_value=("http://x/v1/chat/completions", "k")):
+                                 return_value=("http://x/v1/chat/completions", "k")), \
+             unittest.mock.patch("harbor.flow._reasoning_budget", return_value=None):
             with self.assertRaises(flow.FlowError) as ctx:
                 flow.generate("think about it", max_tokens=8)
         self.assertIn("max_tokens", str(ctx.exception),

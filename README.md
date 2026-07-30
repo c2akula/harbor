@@ -1,5 +1,8 @@
 # harbor — a private, guarded coding harness
 
+[![CI](https://github.com/c2akula/harbor/actions/workflows/ci.yml/badge.svg)](https://github.com/c2akula/harbor/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 Run a strong open-weight coding model as your daily agentic driver on
 infrastructure **you** control, with an optional, tightly firewalled
 escalation path to a frontier model. Proprietary code never leaves machines
@@ -20,7 +23,7 @@ workflows, and (optionally) manages the GPU box's lifecycle and cost.
 ## Quickstart (endpoint mode, ~5 minutes)
 
 ```
-git clone <this repo> && cd harbor
+git clone https://github.com/c2akula/harbor && cd harbor
 ./install.sh
 harbor init        # a guided wizard: validates as you answer,
                    # ends with your next command

@@ -153,6 +153,21 @@ class OperatorLink(unittest.TestCase):
                             for c in calls), "the tunnel must come up")
 
 
+class SudoIsVisible(unittest.TestCase):
+    def test_tunnel_up_never_captures_stderr(self):
+        """sudo asks for a password on stderr. Capturing it turns a question
+        into a silent hang, so the terminal must keep stderr."""
+        import pathlib
+        calls = []
+        with unittest.mock.patch("harbor.wgnet.subprocess.run") as run:
+            run.side_effect = lambda cmd, **kw: (
+                calls.append(kw), unittest.mock.Mock(returncode=0))[1]
+            wgnet.tunnel_up(pathlib.Path("/tmp/x.conf"))
+        for kw in calls:
+            self.assertFalse(kw.get("capture_output"))
+            self.assertNotIn("stderr", kw)
+
+
 class Keypair(unittest.TestCase):
     def test_uses_wg_binary(self):
         with unittest.mock.patch("harbor.wgnet.subprocess.run") as run:

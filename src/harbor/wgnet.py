@@ -128,13 +128,16 @@ def own_keypair() -> tuple[str, str]:
 
 
 def tunnel_up(conf: "pathlib.Path") -> None:
-    """Raise (or refresh) the local spoke — the one sudo in harbor."""
+    """Raise (or refresh) the local spoke — the one sudo in harbor.
+
+    stderr stays on the terminal: capturing it swallows sudo's password
+    prompt, and the command then looks like a hang instead of a question.
+    """
     subprocess.run(["sudo", "wg-quick", "down", str(conf)],
-                   capture_output=True, text=True)   # absent link is fine
-    r = subprocess.run(["sudo", "wg-quick", "up", str(conf)],
-                       capture_output=True, text=True)
-    if r.returncode != 0:
-        raise RuntimeError(f"wg-quick up failed: {r.stderr.strip()}")
+                   stdout=subprocess.DEVNULL, text=True)   # absent link is fine
+    if subprocess.run(["sudo", "wg-quick", "up", str(conf)],
+                      stdout=subprocess.DEVNULL, text=True).returncode != 0:
+        raise RuntimeError("wg-quick up failed (see its output above)")
 
 
 # The operator's peer entry is persisted in the same table the registration
